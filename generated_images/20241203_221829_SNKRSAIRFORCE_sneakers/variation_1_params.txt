@@ -1,0 +1,16 @@
+Original Prompt: SNKRSAIRFORCE sneakers
+Timestamp: 20241203_221829
+Variation: 1
+
+Parameters:
+num_outputs: 1
+width: 1024
+height: 1024
+model: schnell
+lora_scale: 1.0
+output_format: png
+guidance_scale: 3.5
+output_quality: 90
+prompt_strength: 0.8
+extra_lora_scale: 1.0
+num_inference_steps: 4
