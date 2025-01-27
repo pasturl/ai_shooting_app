@@ -122,15 +122,29 @@ class FluxImageGenerator:
             logging.info(f"Model path: {model_info['path']}")
             logging.info(f"Model version: {model_info['version']}")
             
+            # Prepare input parameters
+            input_params = {
+                "prompt": prompt,
+                **{k: v for k, v in params.items() if k != 'extra_loras'}
+            }
+            
+            # Add extra LoRAs if present
+            if 'extra_loras' in params:
+                input_params['extra_loras'] = [
+                    {
+                        "path": lora['path'],
+                        "version": lora['version'],
+                        "scale": lora['scale']
+                    }
+                    for lora in params['extra_loras']
+                ]
+                logging.info(f"Adding extra LoRAs: {input_params['extra_loras']}")
+            
             output = client.run(
                 f"{model_info['path']}:{model_info['version']}",
-                input={
-                    "prompt": prompt,
-                    **params
-                },
+                input=input_params,
                 api_token=REPLICATE_API_TOKEN
             )
-            
             
             if output and isinstance(output, list) and len(output) > 0:
                 image = self.download_image(output[0])
@@ -430,9 +444,36 @@ if generator.MODELS:
         "guidance_scale": st.sidebar.slider("Guidance Scale", 1.0, 20.0, 3.5, 0.5),
         "output_quality": st.sidebar.slider("Output Quality", 1, 100, 90, 1),
         "prompt_strength": st.sidebar.slider("Prompt Strength", 0.0, 1.0, 0.8, 0.1),
-        "extra_lora_scale": st.sidebar.slider("Extra LoRA Scale", 0.0, 2.0, 1.0, 0.1),
         "num_inference_steps": st.sidebar.slider("Inference Steps", 1, 50, 4, 1)
     }
+
+    # Add extra LoRA input
+    with st.sidebar.expander("Advanced LoRA Settings", expanded=False):
+        extra_lora = st.text_input(
+            "Extra LoRA String",
+            help="Enter additional LoRA strings in the format: 'path:version:scale'. Multiple LoRAs can be separated by commas.",
+            placeholder="path:version:scale, path2:version2:scale2"
+        )
+        
+        if extra_lora:
+            # Parse and validate extra LoRA string
+            try:
+                lora_entries = [entry.strip() for entry in extra_lora.split(",")]
+                extra_loras = []
+                
+                for entry in lora_entries:
+                    path, version, scale = entry.split(":")
+                    extra_loras.append({
+                        "path": path.strip(),
+                        "version": version.strip(),
+                        "scale": float(scale.strip())
+                    })
+                
+                params["extra_loras"] = extra_loras
+                st.sidebar.success("Extra LoRA configuration validated!")
+            except Exception as e:
+                st.sidebar.error(f"Invalid LoRA format: {str(e)}")
+                st.sidebar.info("Please use the format: 'path:version:scale' for each LoRA")
 
     # Main area
     st.title("Generate Images")

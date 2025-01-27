@@ -83,7 +83,7 @@ Manage your models and monitor training progress.
 
 # Add footer
 st.markdown("---")
-st.markdown("Made with ❤️ by Your Team")
+st.markdown("Made by Weave")
 
 # Add metrics with error handling
 try:
